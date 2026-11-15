@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="es-DO">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mi Fondo BHD – Control de Inversión</title>
+  <meta name="description" content="Control personal y privado de un fondo de inversión: balances diarios, ganancias, depósitos, retiros y reportes.">
+  <meta name="theme-color" content="#0b2a4f">
+  <meta name="color-scheme" content="light dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Mi Fondo BHD">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="wrap header-inner">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#fff" fill-opacity=".14"/><path d="M9 28l7-8 6 5 9-12" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="31" cy="13" r="2.6" fill="#5be3b8"/></svg>
+        <div class="brand-text">
+          <h1><span class="n1">Mi Fondo BHD</span><span class="dash"> – </span><span class="n2">Control de Inversión</span></h1>
+          <p id="subtitle" class="subtitle">Fondo de inversión BHD</p>
+        </div>
+      </div>
+      <nav class="nav-desktop" aria-label="Secciones">
+        <button data-view="panel">Panel</button>
+        <button data-view="registrar">Registrar</button>
+        <button data-view="historial">Historial</button>
+        <button data-view="graficos">Gráficos</button>
+        <button data-view="ajustes">Ajustes</button>
+      </nav>
+      <div id="lastChip" class="chip" role="status" aria-live="polite"><span class="dot"></span><span class="chip-text">Cargando…</span></div>
+    </div>
+  </header>
+
+  <main class="wrap" id="main">
+    <div id="storageWarn" class="notice warn" hidden></div>
+
+    <!-- ============================ PANEL ============================ -->
+    <section id="view-panel" class="view" aria-labelledby="t-panel">
+      <h2 id="t-panel" class="sr-only">Panel principal</h2>
+      <div id="demoBanner"></div>
+      <div id="panelCards"></div>
+      <div class="grid-2">
+        <article class="card">
+          <div class="card-head"><h3>Evolución del balance</h3><span class="muted small">Últimos 30 registros</span></div>
+          <div class="chart-box short"><canvas id="chMini" aria-label="Gráfico de evolución del balance" role="img"></canvas></div>
+        </article>
+        <article class="card">
+          <div class="card-head"><h3>Últimos registros</h3><button class="link" data-goto="historial">Ver todo</button></div>
+          <div id="recentList"></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ========================== REGISTRAR ========================== -->
+    <section id="view-registrar" class="view" aria-labelledby="t-reg">
+      <h2 id="t-reg" class="sr-only">Registrar</h2>
+      <div class="segmented" role="tablist" aria-label="Qué deseas registrar">
+        <button role="tab" data-regtab="balance" class="active">Balance diario</button>
+        <button role="tab" data-regtab="mov">Depósito / Retiro</button>
+      </div>
+
+      <div id="regBalance" class="reg-pane">
+        <div class="card form-card">
+          <h3>Registrar balance del día</h3>
+          <p class="muted">Escribe el balance acumulado que aparece hoy en tu cuenta del Banco BHD. La ganancia se calcula sola.</p>
+          <form id="formRecord" novalidate autocomplete="off">
+            <div class="field">
+              <label for="recDate">Fecha del registro</label>
+              <input type="date" id="recDate" required>
+            </div>
+            <div class="field">
+              <label for="recBalance">Balance acumulado del fondo</label>
+              <div class="money-input"><span>RD$</span><input type="text" id="recBalance" inputmode="decimal" placeholder="0.00" required></div>
+            </div>
+            <div id="recPreview"></div>
+            <div id="recError" class="form-error" role="alert" hidden></div>
+            <button type="submit" id="recSubmit" class="btn primary block">Guardar registro</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="regMov" class="reg-pane" hidden>
+        <div class="card form-card">
+          <h3>Registrar depósito o retiro</h3>
+          <p class="muted">Los depósitos y retiros ajustan el cálculo: <strong>no cuentan como ganancia ni como pérdida</strong>.</p>
+          <form id="formMov" novalidate autocomplete="off">
+            <div class="field">
+              <span class="label">Tipo de movimiento</span>
+              <div class="segmented small" id="movType">
+                <button type="button" data-type="deposit" class="active">Depósito</button>
+                <button type="button" data-type="withdrawal">Retiro</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="movDate">Fecha</label>
+              <input type="date" id="movDate" required>
+            </div>
+            <div class="field">
+              <label for="movAmount">Monto</label>
+              <div class="money-input"><span>RD$</span><input type="text" id="movAmount" inputmode="decimal" placeholder="0.00" required></div>
+            </div>
+            <div class="field">
+              <label for="movNote">Nota (opcional)</label>
+              <input type="text" id="movNote" maxlength="80" placeholder="Ej.: aporte de la prima">
+            </div>
+            <p class="hint">Si el movimiento ocurre el mismo día que registras el balance, ese balance debe incluirlo (así aparece en el banco).</p>
+            <div id="movError" class="form-error" role="alert" hidden></div>
+            <button type="submit" class="btn primary block">Guardar movimiento</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================== HISTORIAL ========================== -->
+    <section id="view-historial" class="view" aria-labelledby="t-hist">
+      <h2 id="t-hist" class="view-title">Historial y resumen mensual</h2>
+      <div class="segmented" role="tablist">
+        <button role="tab" data-histtab="reg" class="active">Resumen y registros</button>
+        <button role="tab" data-histtab="mov">Movimientos</button>
+      </div>
+
+      <div id="histReg">
+        <div class="card toolbar">
+          <div class="field inline"><label for="hMonth">Mes</label><select id="hMonth"></select></div>
+          <div class="field inline"><label for="hYear">Año</label><select id="hYear"></select></div>
+          <div class="field inline grow"><label for="hSearch">Buscar por fecha</label>
+            <div class="search-row"><input type="date" id="hSearch"><button class="btn ghost small" id="hClear" type="button">Limpiar</button></div></div>
+        </div>
+        <div id="histSummary"></div>
+        <article class="card">
+          <div class="card-head wrap-head">
+            <h3 id="histTitle">Registros</h3>
+            <div class="btn-row">
+              <button class="btn ghost small" id="btnSort" type="button">Más recientes primero</button>
+              <button class="btn ghost small" id="btnCsv" type="button">CSV</button>
+              <button class="btn ghost small" id="btnXlsx" type="button">Excel</button>
+              <button class="btn primary small" id="btnPdf" type="button">Informe PDF</button>
+            </div>
+          </div>
+          <div id="histTable"></div>
+          <p class="hint">«CSV» exporta la vista filtrada; «Excel» exporta todo (registros, movimientos y resumen mensual). «Informe PDF» abre la vista de impresión: elige <em>Guardar como PDF</em>.</p>
+        </article>
+      </div>
+
+      <div id="histMov" hidden>
+        <article class="card">
+          <div class="card-head"><h3>Depósitos y retiros</h3><button class="btn primary small" data-goto="registrar-mov" type="button">+ Nuevo</button></div>
+          <div id="movTable"></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- =========================== GRÁFICOS =========================== -->
+    <section id="view-graficos" class="view" aria-labelledby="t-gr">
+      <h2 id="t-gr" class="view-title">Gráficos y estadísticas</h2>
+      <div class="segmented small" id="rangeSel" aria-label="Rango de tiempo">
+        <button data-range="30" class="active">30 registros</button>
+        <button data-range="90">90</button>
+        <button data-range="250">≈1 año</button>
+        <button data-range="all">Todo</button>
+      </div>
+      <div class="grid-2 charts">
+        <article class="card"><div class="card-head"><h3>Evolución del balance acumulado</h3></div><div class="chart-box"><canvas id="chBalance" role="img" aria-label="Evolución del balance acumulado"></canvas></div></article>
+        <article class="card"><div class="card-head"><h3>Ganancias diarias</h3></div><div class="chart-box"><canvas id="chDaily" role="img" aria-label="Ganancias diarias"></canvas></div></article>
+        <article class="card"><div class="card-head"><h3>Ganancias mensuales</h3></div><div class="chart-box"><canvas id="chMonthly" role="img" aria-label="Ganancias mensuales"></canvas></div></article>
+        <article class="card"><div class="card-head wrap-head"><h3>Comparación entre meses</h3>
+          <div class="segmented small" id="cmpSel"><button data-metric="gain" class="active">Ganancia</button><button data-metric="pct">Rentabilidad %</button></div></div>
+          <div class="chart-box"><canvas id="chCompare" role="img" aria-label="Comparación de ganancias entre meses"></canvas></div></article>
+      </div>
+      <article class="card">
+        <div class="card-head"><h3>Tabla comparativa mensual</h3><span class="muted small">Toca un mes para abrirlo</span></div>
+        <div id="monthTable"></div>
+      </article>
+    </section>
+
+    <!-- ============================ AJUSTES =========================== -->
+    <section id="view-ajustes" class="view" aria-labelledby="t-aj">
+      <h2 id="t-aj" class="view-title">Configuración de mi inversión</h2>
+      <div class="grid-2 cfg">
+        <article class="card form-card">
+          <h3>Mi inversión</h3>
+          <form id="formCfg" novalidate autocomplete="off">
+            <div class="field"><label for="cfgName">Nombre de la inversión</label><input type="text" id="cfgName" maxlength="60"></div>
+            <div class="field"><label for="cfgStart">Fecha de inicio de la inversión</label><input type="date" id="cfgStart"></div>
+            <div class="field"><label for="cfgCapital">Monto del capital inicial</label>
+              <div class="money-input"><span>RD$</span><input type="text" id="cfgCapital" inputmode="decimal" placeholder="0.00"></div></div>
+            <div class="field"><label for="cfgCur">Moneda</label><input type="text" id="cfgCur" value="Pesos dominicanos (RD$)" disabled></div>
+            <p class="hint">El capital inicial es el punto de partida del primer registro. Para dinero que agregues o saques después, usa <strong>Depósito / Retiro</strong>: así el historial queda intacto.</p>
+            <div id="cfgError" class="form-error" role="alert" hidden></div>
+            <button type="submit" class="btn primary block">Guardar configuración</button>
+          </form>
+        </article>
+
+        <div class="stack">
+          <article class="card">
+            <h3>Respaldo de la información</h3>
+            <p class="muted">Tus datos se guardan en este dispositivo (IndexedDB) y permanecen aunque cierres el navegador o apagues el equipo. Descarga una copia con regularidad.</p>
+            <p id="backupInfo" class="small"></p>
+            <div class="btn-row">
+              <button class="btn primary" id="btnExport" type="button">Exportar respaldo</button>
+              <button class="btn ghost" id="btnImport" type="button">Importar respaldo</button>
+              <input type="file" id="fileImport" accept="application/json,.json" hidden>
+            </div>
+          </article>
+          <article class="card">
+            <h3>Datos</h3>
+            <div class="btn-row">
+              <button class="btn ghost" id="btnDemo" type="button">Cargar datos de demostración</button>
+              <button class="btn danger" id="btnWipe" type="button">Borrar todos los datos</button>
+            </div>
+          </article>
+          <article class="card privacy">
+            <h3>Privacidad</h3>
+            <p class="muted">Uso estrictamente personal. La aplicación no se conecta al Banco BHD, no pide credenciales y <strong>no envía información a ningún servidor</strong>: todo se escribe a mano y se queda en tu dispositivo.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="nav-mobile" aria-label="Secciones">
+    <button data-view="panel"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6V11h-6zM4 20h6v-4H4zM14 7h6V4h-6z"/></svg><span>Panel</span></button>
+    <button data-view="registrar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Registrar</span></button>
+    <button data-view="historial"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Historial</span></button>
+    <button data-view="graficos"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-6"/></svg><span>Gráficos</span></button>
+    <button data-view="ajustes"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg><span>Ajustes</span></button>
+  </nav>
+
+  <div id="modalRoot"></div>
+  <div id="toasts" aria-live="polite"></div>
+  <div id="printArea" aria-hidden="true"></div>
+
+  <script src="lib/chart.umd.js"></script>
+  <script src="js/calc.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/demo.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
